@@ -1,0 +1,54 @@
+/* stylelint-disable declaration-no-important */
+
+.bolder {
+  font-weight: 800 !important;
+}
+
+.h2 {
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.3;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+}
+
+// stylelint-disable selector-no-qualifying-type
+.bfp-related-links {
+  h2 {
+    font-size: 0.75rem;
+    font-weight: 800;
+    line-height: 1.3;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+  }
+
+  .bfp-related-links__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .bfp-related-links__list-item {
+    margin-bottom: 1rem;
+  }
+
+  .bfp-related-links__link {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    font-size: 1.375rem;
+    line-height: 1.2;
+    color: #222;
+
+    &:hover,
+    &:focus {
+      text-decoration: underline;
+    }
+  }
+
+  .bfp-related-links__meta {
+    font-size: 0.875rem;
+    line-height: 1.3;
+    color: #666;
+  }
+}
