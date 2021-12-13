@@ -1,7 +1,16 @@
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { sampleData } from "./data";
 import './App.scss';
+
+// const filterForUrl = (url, data) => {
+//   let result = false;
+//   for(let key in data){
+//     if(key.url === url){
+//       result = true; 
+//     }
+//   }
+//  }
 
 const getBuzzDataByUrl = (url) => {
   const hasData = sampleData.length;
@@ -32,7 +41,14 @@ const initialState = {
   links: [],
   lookupUrl: "",
   mode: "builder",
-  error: null
+  disableSubmit: true,
+  error: true, 
+  validation: {
+    label: true,
+    labelError: "",
+    articleUrl: true,
+    articleError: "",
+  },
 };
 
 /**
@@ -55,12 +71,12 @@ const Error = ({ error }) => {
   );
 };
 
-const Links = ({ links }) => {
+const Links = ({ links, handleDelete }) => {
   const linkItems = links.map((link) => {
     return (
-      <li className="bold xs-my1 xs-flex xs-flex-justify-space-between xs-col-12">
+      <li key={link.id} className="bold xs-my1 xs-flex xs-flex-justify-space-between xs-col-12">
         <div className="xs-border xs-mr1 xs-p1">{link.title}</div>
-        <div className="xs-border xs-flex xs-flex-align-center xs-p1">
+        <div className="xs-border xs-flex xs-flex-align-center xs-p1" onClick={() => {handleDelete(link.id)}}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 38 38"
@@ -85,7 +101,7 @@ const Links = ({ links }) => {
 const Preview = ({ state, handleEdit }) => {
   const linkItems = state.links.map((link) => {
     return (
-      <li className="bfp-related-links__list-item">
+      <li className="bfp-related-links__list-item" key={link.id}>
         <a href={link.url} className="bfp-related-links__link">
           {link.title}
         </a>
@@ -99,7 +115,7 @@ const Preview = ({ state, handleEdit }) => {
   return (
     <div className="xs-p1">
       <aside className="bfp-related-links">
-        <h2 className="bfp-related-links__title">{state.title}</h2>
+        <h2 className="bfp-related-links__title">{state.label}</h2>
         <ul className="bfp-related-links__list">{linkItems}</ul>
       </aside>
       <button type="button" className="button" onClick={handleEdit}>
@@ -111,8 +127,12 @@ const Preview = ({ state, handleEdit }) => {
 
 const Builder = ({
   handleUrlLookup,
+  handleLabelChange,
   onUrlChange,
+  onLabelBlur,
+  onUrlBlur,
   handleSave,
+  handleDelete,
   handleEdit,
   state
 }) => {
@@ -127,7 +147,7 @@ const Builder = ({
           <label className="form-label clearfix">
             Label<span className="text-red">*</span>
           </label>
-          <input type="text" className="text-input xs-col-12"></input>
+          <input id={`labelInput ${state.validation.label ? "" : "error"}`} onChange={handleLabelChange} onBlur={onLabelBlur} type="text" className={`text-input xs-col-12`} autoFocus></input>
           <p className="xs-text-6 text-gray-lightest xs-mt1">
             You can try something like "Olympic Highlights"
           </p>
@@ -139,14 +159,16 @@ const Builder = ({
           </label>
 
           <p className="md-mb1">3-4 links recommended.</p>
-          {state.links.length ? <Links links={state.links} /> : ""}
+          {state.links.length ? <Links links={state.links} handleDelete={handleDelete} /> : ""}
           <div className="xs-flex xs-flex-justify-space-between">
             <input
-              id="url"
+              id={`urlInput ${state.validation.articleUrl ? "" : "error"}`}
               type="url"
               className="text-input col xs-col-9 xs-mr1"
               placeholder="https://www.buzzfeed.com/..."
               onChange={onUrlChange}
+              onBlur={onUrlBlur}
+              autoFocus
             ></input>
             <button
               type="button"
@@ -161,7 +183,7 @@ const Builder = ({
           <button type="button" className="button button--secondary">
             Cancel
           </button>
-          <button type="button" className="button xs-ml1" onClick={handleSave}>
+          <button type="button" className="button xs-ml1" disabled={state.disableSubmit} onClick={handleSave}>
             Save
           </button>
         </footer>
@@ -193,14 +215,64 @@ const App = () => {
     setState({ ...state, mode: "builder" });
   };
 
+  const handleLabelChange = (e) => {
+    setState({ ...state, label: e.target.value})
+  }
+
+  const labelOnBlur = () => {
+    validateLabel();
+   }
+
+   const articleOnBlur = () => {
+     validateUrl();
+   }
+
+   const validateUrl = () => { 
+    // eslint-disable-next-line no-useless-escape
+    const urlRegex =  /^((http|https):\/\/)?(www.)?(?!.*(http|https|www.))[a-zA-Z0-9_-]+(\.[a-zA-Z]+)+(\/)?.([\w\?[a-zA-Z-_%\/@?]+)*([^\/\w\?[a-zA-Z0-9_-]+=\w+(&[a-zA-Z0-9_]+=\w+)*)?$/;
+    
+    if(!state.lookupUrl){
+      setState({...state, validation: {...state.validation, articleUrl: false, articleError: "A url is required"}})
+    }
+    else if(!state.lookupUrl.match(urlRegex)){
+      setState({...state,  validation: {...state.validation, articleUrl: false, articleError: "A real url is required"}});
+    } else {
+      setState({...state, validation: {...state.validation, articleUrl: true, articleError: ""}})
+    }
+   }
+
+   const validateLabel = () => {
+     if(state.label){
+       setState({...state, validation:{...state.validation, label: true, labelError: ""} })
+     } else {
+       setState({...state, validation: {...state.validation, label: false, labelError: "A label is required."}})
+     }
+   }
+
+   const handleDeleteLink = (id) => {
+    const currState = state;
+    const indexOfLink = currState.links.indexOf(id);
+    currState.links.splice(indexOfLink, 1);
+    setState({...state, links: currState.links});
+   }
+
+   useEffect(() => {
+    const disableSubmit = !(state.validation.label && state.validation.articleUrl);
+    setState({...state, disableSubmit: disableSubmit}); 
+   }, [state.validation])
+
   return (
     <div className="lg-flex lg-flex-justify-center xs-py1 xs-px1 lg-px0">
       {state.mode === "builder" ? (
         <Builder
           state={state}
           handleUrlLookup={handleUrlLookup}
+          onLabelBlur={labelOnBlur}
+          onUrlBlur={articleOnBlur}
           onUrlChange={onUrlChange}
           handleSave={handleSave}
+          handleDelete={handleDeleteLink}
+          handleLabelChange={handleLabelChange}
         />
       ) : (
         <Preview state={state} handleEdit={handleEdit} />

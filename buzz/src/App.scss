@@ -12,6 +12,14 @@
   text-transform: uppercase;
 }
 
+input[id="labelInput error"] {
+  border-color: red !important;
+}
+
+input[id="urlInput error"] {
+  border-color: red !important;
+}
+
 // stylelint-disable selector-no-qualifying-type
 .bfp-related-links {
   h2 {
